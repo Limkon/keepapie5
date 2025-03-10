@@ -1,0 +1,44 @@
+name: Call Microsoft Graph API
+
+# 触发条件：定时运行（例如每小时）
+on:
+  schedule:
+    - cron: "* */20 * * *"  # 每小时运行一次，可调整为其他频率
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  call-graph-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests msal
+
+      # 运行脚本
+      - name: Run Graph API script
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: python graph_api_scheduler.py
+
+      # 可选：上传结果文件作为构建产物
+      - name: Upload result
+        if: always()  # 即使失败也上传
+        uses: actions/upload-artifact@v3
+        with:
+          name: user-data
+          path: user_data.txt
